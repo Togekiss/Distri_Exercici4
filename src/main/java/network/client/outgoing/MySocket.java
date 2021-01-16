@@ -1,4 +1,4 @@
-package network.outgoing;
+package network.client.outgoing;
 
 import controller.Node;
 
@@ -19,6 +19,7 @@ public class MySocket extends Thread{
     private DataOutputStream doStream;
     private ObjectOutputStream ooStream;
     private DataInputStream diStream;
+
 
     public MySocket(int port) {
         // Averiguem quina direccio IP hem d'utilitzar

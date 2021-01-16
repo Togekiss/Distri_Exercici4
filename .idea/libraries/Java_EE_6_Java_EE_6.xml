@@ -13,6 +13,9 @@
       <root url="jar://$PROJECT_DIR$/lib/cdi-api-2.0.SP1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/javax.websocket-client-api-1.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/javax.websocket-api-1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/tyrus-standalone-client-2.0.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/websocket-ri-bundle-2.0.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jakarta.websocket-api-2.0.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

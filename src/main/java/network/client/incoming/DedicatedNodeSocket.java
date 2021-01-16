@@ -1,5 +1,5 @@
 // package where it belongs
-package network.incoming;
+package network.client.incoming;
 
 
 // import java classes

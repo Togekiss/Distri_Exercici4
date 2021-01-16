@@ -1,13 +1,19 @@
 package controller;
 
-import jdk.nashorn.internal.runtime.regexp.joni.Regex;
-import network.WebSocket;
-import network.incoming.NodeSocket;
-import network.outgoing.MySocket;
+import network.client.ContainerTest;
+import network.client.incoming.NodeSocket;
+import network.client.outgoing.MySocket;
+import org.glassfish.tyrus.client.ClientManager;
 
+import javax.websocket.ContainerProvider;
+import javax.websocket.DeploymentException;
+import javax.websocket.Session;
+import javax.websocket.WebSocketContainer;
+import javax.xml.ws.WebServiceClient;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
@@ -23,7 +29,10 @@ public class Node {
     private final ArrayList<MySocket> socketListC;
     private final String[] lastOperations;
     private int[] status;
-    private WebSocket webSocket;
+    private Session session ;
+    private ContainerTest containerTest;
+    private WebSocketContainer webSocketContainer;
+    private ClientManager clientManager;
 
 
     public Node(String name, int myPort, int numPorts, String[] arguments){
@@ -36,17 +45,21 @@ public class Node {
         socketListC = new ArrayList<>();
         lastOperations = new String[10];
         status = new int[100];
-
+        clientManager = ClientManager.createClient();
+        //this.webSocketContainer = ContainerProvider.getWebSocketContainer();
+        containerTest = new ContainerTest();
         int[] ports = new int[numPorts];
 
         for (int i = 0; i < numPorts; i++){
             ports[i] = Integer.parseInt(arguments[i + 3]);
         }
         //readOps();
+        System.out.println("Sending hello to server");
+        //sendToServer();
+        sendToServer2();
+        sendToServer3();
         System.out.println("Waiting...");
 
-        this.webSocket = new WebSocket();
-        webSocket.setNode(this);
         setSockets(ports, myPort);
         System.out.println("Socket list A: " + socketListA.size());
         System.out.println("Socket list B: " + socketListB.size());
@@ -58,8 +71,37 @@ public class Node {
         }else if (name.equals("B2")){
             new TimerThread(this).start();
         }
-
     }
+
+    public void sendToServer(){
+        try {
+            Session session = webSocketContainer.connectToServer(containerTest, URI.create("ws://localhost:8080/test_war_exploded/status"));
+            containerTest.sendMessage("Hello from client");
+        } catch (DeploymentException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private void sendToServer2(){
+        ClientManager clientManager = ClientManager.createClient();
+        jakarta.websocket.Session session = null;
+        try {
+            session = clientManager.connectToServer(containerTest, URI.create("ws://localhost:8080/test_war_exploded/status"));
+            session.getBasicRemote().sendText("Hello from client 2");
+        } catch (jakarta.websocket.DeploymentException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private void sendToServer3(){
+        ClientManager clientManager = ClientManager.createClient();
+        Session session = null;
+        try {
+            session = (Session) clientManager.connectToServer(containerTest, URI.create("ws://localhost:8080/test_war_exploded/status"));
+            session.getBasicRemote().sendText("Hello from client 3");
+        } catch (jakarta.websocket.DeploymentException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private void startWorking() {
         int index = 0;

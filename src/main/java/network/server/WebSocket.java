@@ -1,6 +1,4 @@
-package network;
-
-import controller.Node;
+package network.server;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.websocket.*;
@@ -13,17 +11,29 @@ import java.util.Set;
 @ServerEndpoint("/status")
 public class WebSocket {
     private Set<Session> sessions = new HashSet<>();
-    private Node node;
+    private Session session;
 
     @OnOpen
     public void onOpen(Session session){
-        System.out.println("Session opened for node " + Node.name);
+        System.out.println("Session opened in WebSocket ");
+        this.session = session;
         sessions.add(session);
     }
-/*
+
     @OnMessage
-    public void handleMessage(String message, Session session) {
-        System.out.println("new message: " + message);
+    public void handleMessage(String message) {
+        if (session.isOpen() && session != null){
+            try {
+                System.out.println("Sendin message from server: " + message);
+                session.getBasicRemote().sendText("Message sent from server: " + message);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }else{
+            System.out.println("Session is not opened or null");
+        }
+
+        /*
         try {
             for (int c = 0; c < 100; c++) {
                 for (Session s : sessions) {
@@ -35,8 +45,10 @@ public class WebSocket {
             System.out.println(e.getMessage());
             e.printStackTrace();
         }
+
+         */
     }
- */
+
 
 
     @OnClose
@@ -49,30 +61,5 @@ public class WebSocket {
     public void onError(Throwable e) {
         System.out.println(e.getMessage());
         e.printStackTrace();
-    }
-
-    public void setNode(Node node) {
-        this.node = node;
-    }
-
-    @OnMessage
-    public void getMessage(String message) {
-        System.out.println("Got message: " + message);
-        if (message.equals("C1")){
-            new Node(message, 44449, 0, null);
-        }else if (message.equals("C2")){
-            new Node(message, 44450, 0, null);
-        }
-
-    }
-
-    public void setMessage(String message) {
-        for (Session s : sessions) {
-            try {
-                s.getBasicRemote().sendText(message);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }

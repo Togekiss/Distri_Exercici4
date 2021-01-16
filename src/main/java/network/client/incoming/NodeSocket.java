@@ -1,5 +1,5 @@
 // this class belongs to network package
-package network.incoming;
+package network.client.incoming;
 
 // import java classes
 import controller.Node;
