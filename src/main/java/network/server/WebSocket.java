@@ -24,29 +24,16 @@ public class WebSocket {
     public void handleMessage(String message) {
         if (session.isOpen() && session != null){
             try {
-                System.out.println("Sendin message from server: " + message);
-                session.getBasicRemote().sendText("Message sent from server: " + message);
+                System.out.println("Received this message in the server: " + message);
+
+                //TODO edit html??
+                session.getBasicRemote().sendText("This is a totally unnecessary answer from the server.");
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }else{
             System.out.println("Session is not opened or null");
         }
-
-        /*
-        try {
-            for (int c = 0; c < 100; c++) {
-                for (Session s : sessions) {
-                    s.getBasicRemote().sendText("{\"value\" : \"" + (c + 1) + "\"}");
-                }
-                Thread.sleep(100);
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            e.printStackTrace();
-        }
-
-         */
     }
 
 

@@ -1,8 +1,6 @@
 var socket = new WebSocket("ws://localhost:8080/test_war_exploded/status");
 socket.onmessage = onMessage;
 
-var socket2 = new WebSocket("ws://localhost:8080/test_war_exploded/status");
-socket.onmessage = onMessage;
 
 var wsUrl = 'ws://' + window.location.host
 console.log(wsUrl)

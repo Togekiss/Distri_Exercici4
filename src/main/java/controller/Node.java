@@ -1,6 +1,6 @@
 package controller;
 
-import network.client.ContainerTest;
+import network.client.ClientWebSocket;
 import network.client.incoming.NodeSocket;
 import network.client.outgoing.MySocket;
 import org.glassfish.tyrus.client.ClientManager;
@@ -9,7 +9,6 @@ import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
-import javax.xml.ws.WebServiceClient;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -30,7 +29,7 @@ public class Node {
     private final String[] lastOperations;
     private int[] status;
     private Session session ;
-    private ContainerTest containerTest;
+    private ClientWebSocket clientWebSocket;
     private WebSocketContainer webSocketContainer;
     private ClientManager clientManager;
 
@@ -47,7 +46,14 @@ public class Node {
         status = new int[100];
         clientManager = ClientManager.createClient();
         //this.webSocketContainer = ContainerProvider.getWebSocketContainer();
-        containerTest = new ContainerTest();
+        clientWebSocket = new ClientWebSocket(this);
+        try {
+            ContainerProvider.getWebSocketContainer().connectToServer(clientWebSocket, URI.create("ws://localhost:8080/test_war_exploded/status"));
+            clientWebSocket.getSession().getBasicRemote().sendText("Hello, I am node " + Node.name);
+        } catch (DeploymentException | IOException e) {
+            e.printStackTrace();
+        }
+
         int[] ports = new int[numPorts];
 
         for (int i = 0; i < numPorts; i++){
@@ -56,8 +62,8 @@ public class Node {
         //readOps();
         System.out.println("Sending hello to server");
         //sendToServer();
-        sendToServer2();
-        sendToServer3();
+        //sendToServer2();
+        //sendToServer3();
         System.out.println("Waiting...");
 
         setSockets(ports, myPort);
@@ -75,8 +81,8 @@ public class Node {
 
     public void sendToServer(){
         try {
-            Session session = webSocketContainer.connectToServer(containerTest, URI.create("ws://localhost:8080/test_war_exploded/status"));
-            containerTest.sendMessage("Hello from client");
+            Session session = webSocketContainer.connectToServer(clientWebSocket, URI.create("ws://localhost:8080/test_war_exploded/status"));
+            clientWebSocket.sendMessage("Hello from client");
         } catch (DeploymentException | IOException e) {
             e.printStackTrace();
         }
@@ -85,7 +91,7 @@ public class Node {
         ClientManager clientManager = ClientManager.createClient();
         jakarta.websocket.Session session = null;
         try {
-            session = clientManager.connectToServer(containerTest, URI.create("ws://localhost:8080/test_war_exploded/status"));
+            session = clientManager.connectToServer(clientWebSocket, URI.create("ws://localhost:8080/test_war_exploded/status"));
             session.getBasicRemote().sendText("Hello from client 2");
         } catch (jakarta.websocket.DeploymentException | IOException e) {
             e.printStackTrace();
@@ -95,7 +101,7 @@ public class Node {
         ClientManager clientManager = ClientManager.createClient();
         Session session = null;
         try {
-            session = (Session) clientManager.connectToServer(containerTest, URI.create("ws://localhost:8080/test_war_exploded/status"));
+            session = (Session) clientManager.connectToServer(clientWebSocket, URI.create("ws://localhost:8080/test_war_exploded/status"));
             session.getBasicRemote().sendText("Hello from client 3");
         } catch (jakarta.websocket.DeploymentException | IOException e) {
             e.printStackTrace();
