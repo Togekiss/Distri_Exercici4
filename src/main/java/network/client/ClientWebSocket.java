@@ -17,14 +17,6 @@ public class ClientWebSocket {
     @OnOpen
     public void onOpen(Session session, EndpointConfig endpointConfig) {
         this.session = session;
-
-      /*  this.session.addMessageHandler(new MessageHandler.Whole<String>() {
-
-            @Override
-            public void onMessage(String message) {
-                System.out.println("Retrieved message: " + message);
-            }
-        });*/
     }
 
     @OnMessage

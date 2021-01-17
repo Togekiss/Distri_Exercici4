@@ -9,9 +9,7 @@ import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,7 +30,8 @@ public class Node {
     private ClientWebSocket clientWebSocket;
     private WebSocketContainer webSocketContainer;
     private ClientManager clientManager;
-
+    private File myObj;
+    private FileWriter myWriter;
 
     public Node(String name, int myPort, int numPorts, String[] arguments){
         Node.name = name;
@@ -47,9 +46,16 @@ public class Node {
         clientManager = ClientManager.createClient();
         //this.webSocketContainer = ContainerProvider.getWebSocketContainer();
         clientWebSocket = new ClientWebSocket(this);
+        myObj = new File("./src/main/java/data/log" + name + ".txt");
+
         try {
+            myWriter = new FileWriter(myObj);
+            if (myObj.createNewFile()) {
+                System.out.println("File created: " + myObj.getName());
+            } else {
+                myWriter.write("");
+            }
             ContainerProvider.getWebSocketContainer().connectToServer(clientWebSocket, URI.create("ws://localhost:8080/test_war_exploded/status"));
-            clientWebSocket.getSession().getBasicRemote().sendText("Hello, I am node " + Node.name);
         } catch (DeploymentException | IOException e) {
             e.printStackTrace();
         }
@@ -137,11 +143,13 @@ public class Node {
                     //opsC.add(line);
                 }
                 index = updateLastOperations(line, index);
+
+                Thread.sleep(500);
                 // read next line
                 line = reader.readLine();
             }
             reader.close();
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -229,6 +237,7 @@ public class Node {
     }
 
     public synchronized void doOperation(String operation) {
+        String op = operation;
         if (operation.startsWith("r")){
             operation = operation.replaceAll("[^\\d]", "");
             System.out.println("\tReading index " + operation +  ": " + status[Integer.parseInt(operation)]);
@@ -239,18 +248,31 @@ public class Node {
             System.out.println("\tWriting " + Integer.parseInt(ops[1]) + " in index " + Integer.parseInt(ops[0]));
         }
         System.out.println(Arrays.toString(status));
+        notifyTomcat(name, op, status);
         System.out.println("---- Operation completed ----");
     }
 
 
     public void setStatus(int[] status) {
-        // TODO: notify websocket of status change
         System.out.println("Updating status");
         System.out.println(Arrays.toString(status));
         this.status = status;
+        notifyTomcat(name, "Status update", status);
     }
 
-    public String getName() {
-        return name;
+    private void notifyTomcat(String name, String operation, int[] status) {
+        String op;
+        try {
+            op = "Node " + name + " performed operation: " + operation + " resulting in this status:\n" + Arrays.toString(status);
+            try {
+                myWriter.append(op + "\n");
+            } catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
+            clientWebSocket.getSession().getBasicRemote().sendText(op);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -38,15 +38,6 @@ public class MySocket extends Thread{
         }
     }
 
-    public void desconecta(){
-        try{
-            doStream.writeUTF("DISCONNECT");
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-    }
-
-
     public void notifyData(String operation, boolean update) {
         try {
             if (update){
