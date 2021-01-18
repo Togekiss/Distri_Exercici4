@@ -4,7 +4,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class TimerThread extends Thread {
-    private Node node;
+    private final Node node;
     public TimerThread(Node node) {
         this.node = node;
     }

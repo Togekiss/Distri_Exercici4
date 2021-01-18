@@ -1,21 +1,16 @@
 package network.client;
 
-import controller.Node;
-
-import javax.websocket.*;
-import java.io.IOException;
+import javax.websocket.ClientEndpoint;
+import javax.websocket.OnMessage;
+import javax.websocket.OnOpen;
+import javax.websocket.Session;
 
 @ClientEndpoint
 public class ClientWebSocket {
     private Session session;
-    private Node node;
-
-    public ClientWebSocket(Node node){
-        this.node = node;
-    }
 
     @OnOpen
-    public void onOpen(Session session, EndpointConfig endpointConfig) {
+    public void onOpen(Session session) {
         this.session = session;
     }
 
@@ -27,13 +22,5 @@ public class ClientWebSocket {
 
     public Session getSession(){
         return session;
-    }
-
-    public void sendMessage(String message){
-        try {
-            session.getBasicRemote().sendText(message);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }

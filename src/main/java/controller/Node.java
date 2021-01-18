@@ -3,12 +3,9 @@ package controller;
 import network.client.ClientWebSocket;
 import network.client.incoming.NodeSocket;
 import network.client.outgoing.MySocket;
-import org.glassfish.tyrus.client.ClientManager;
 
 import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
-import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
 import java.io.*;
 import java.net.URI;
 import java.util.ArrayList;
@@ -18,42 +15,31 @@ import java.util.Scanner;
 
 public class Node {
     public static String name;
-    private final ArrayList<String> opsA;
-    private final ArrayList<String> opsB;
-    private final ArrayList<String> opsC;
     private final ArrayList<MySocket> socketListA;
     private final ArrayList<MySocket> socketListB;
     private final ArrayList<MySocket> socketListC;
     private final String[] lastOperations;
     private int[] status;
-    private Session session ;
-    private ClientWebSocket clientWebSocket;
-    private WebSocketContainer webSocketContainer;
-    private ClientManager clientManager;
-    private File myObj;
-    private FileWriter myWriter;
+    private final ClientWebSocket clientWebSocket;
+    private BufferedWriter writer;
+    private TimerThread timerThread;
 
     public Node(String name, int myPort, int numPorts, String[] arguments){
         Node.name = name;
-        opsB = new ArrayList<>();
-        opsA = new ArrayList<>();
-        opsC = new ArrayList<>();
         socketListA = new ArrayList<>();
         socketListB = new ArrayList<>();
         socketListC = new ArrayList<>();
         lastOperations = new String[10];
         status = new int[100];
-        clientManager = ClientManager.createClient();
-        //this.webSocketContainer = ContainerProvider.getWebSocketContainer();
-        clientWebSocket = new ClientWebSocket(this);
-        myObj = new File("./src/main/java/data/log" + name + ".txt");
+        clientWebSocket = new ClientWebSocket();
+        File myObj = new File("./src/main/java/data/log" + name + ".txt");
 
         try {
-            myWriter = new FileWriter(myObj);
+            writer = new BufferedWriter(new FileWriter(myObj));
             if (myObj.createNewFile()) {
                 System.out.println("File created: " + myObj.getName());
             } else {
-                myWriter.write("");
+                writer.write("");
             }
             ContainerProvider.getWebSocketContainer().connectToServer(clientWebSocket, URI.create("ws://localhost:8080/test_war_exploded/status"));
         } catch (DeploymentException | IOException e) {
@@ -65,11 +51,6 @@ public class Node {
         for (int i = 0; i < numPorts; i++){
             ports[i] = Integer.parseInt(arguments[i + 3]);
         }
-        //readOps();
-        System.out.println("Sending hello to server");
-        //sendToServer();
-        //sendToServer2();
-        //sendToServer3();
         System.out.println("Waiting...");
 
         setSockets(ports, myPort);
@@ -77,40 +58,10 @@ public class Node {
         System.out.println("Socket list B: " + socketListB.size());
         System.out.println("Socket list C: " + socketListC.size());
         if (name.equals("Client")){
-            //readOps();
-
             startWorking();
         }else if (name.equals("B2")){
-            new TimerThread(this).start();
-        }
-    }
-
-    public void sendToServer(){
-        try {
-            Session session = webSocketContainer.connectToServer(clientWebSocket, URI.create("ws://localhost:8080/test_war_exploded/status"));
-            clientWebSocket.sendMessage("Hello from client");
-        } catch (DeploymentException | IOException e) {
-            e.printStackTrace();
-        }
-    }
-    private void sendToServer2(){
-        ClientManager clientManager = ClientManager.createClient();
-        jakarta.websocket.Session session = null;
-        try {
-            session = clientManager.connectToServer(clientWebSocket, URI.create("ws://localhost:8080/test_war_exploded/status"));
-            session.getBasicRemote().sendText("Hello from client 2");
-        } catch (jakarta.websocket.DeploymentException | IOException e) {
-            e.printStackTrace();
-        }
-    }
-    private void sendToServer3(){
-        ClientManager clientManager = ClientManager.createClient();
-        Session session = null;
-        try {
-            session = (Session) clientManager.connectToServer(clientWebSocket, URI.create("ws://localhost:8080/test_war_exploded/status"));
-            session.getBasicRemote().sendText("Hello from client 3");
-        } catch (jakarta.websocket.DeploymentException | IOException e) {
-            e.printStackTrace();
+            timerThread = new TimerThread(this);
+            timerThread.start();
         }
     }
 
@@ -149,10 +100,14 @@ public class Node {
                 line = reader.readLine();
             }
             reader.close();
+            socketListA.forEach(MySocket::notifyEnd);
+            socketListB.forEach(MySocket::notifyEnd);
+            socketListC.forEach(MySocket::notifyEnd);
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
+
 
     private int updateLastOperations(String line, int index) {
         if (index < 10){
@@ -162,45 +117,6 @@ public class Node {
             System.arraycopy(lastOperations, 1, lastOperations, 0, lastOperations.length - 1);
         }
         return index;
-    }
-
-    private void readOps() {
-        BufferedReader reader;
-        try {
-            reader = new BufferedReader(new FileReader("./src/main/java/data/operations.txt"));
-            String line = reader.readLine();
-            while (line != null) {
-                if (line.startsWith("0")){
-                    line = line.replaceFirst("0 ", "");
-                    opsA.add(line);
-                }else if(line.startsWith("1")){
-                    line = line.replaceFirst("1 ", "");
-                    opsB.add(line);
-                }else if(line.startsWith("2")){
-                    line = line.replaceFirst("2 ", "");
-                    opsC.add(line);
-                }
-                // read next line
-                line = reader.readLine();
-            }
-            reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-        System.out.println("A size:" + opsA.size());
-        for (String s : opsA){
-            System.out.println("A: " + s);
-        }
-        System.out.println("B size:" + opsB.size());
-        for (String s : opsB){
-            System.out.println("B: " + s);
-        }
-        System.out.println("C size:" + opsC.size());
-        for (String s : opsC){
-            System.out.println("C: " + s);
-        }
     }
 
     private void setSockets(int[] ports, int myPort) {
@@ -228,7 +144,6 @@ public class Node {
     }
 
     public void updateB() {
-        System.out.println("Updating all Bs");
         socketListB.forEach(mySocket -> mySocket.updateStatus(status));
     }
 
@@ -265,7 +180,7 @@ public class Node {
         try {
             op = "Node " + name + " performed operation: " + operation + " resulting in this status:\n" + Arrays.toString(status);
             try {
-                myWriter.append(op + "\n");
+                writer.append(op).append("\n");
             } catch (IOException e) {
                 System.out.println("An error occurred.");
                 e.printStackTrace();
@@ -274,5 +189,18 @@ public class Node {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void closeFile() {
+        try {
+            writer.close();
+            if (name.equals("B2")){
+                timerThread.join();
+                clientWebSocket.getSession().close();
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.exit(0);
     }
 }

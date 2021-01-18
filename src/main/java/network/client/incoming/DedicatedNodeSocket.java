@@ -1,49 +1,29 @@
-// package where it belongs
 package network.client.incoming;
 
-
-// import java classes
 import controller.Node;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
-
-/**
- * This class manages the network service of the reception program
- */
 public class DedicatedNodeSocket extends Thread {
-
-    private Node node;
-    private Socket sClient;
-    private DataOutputStream doStream;
+    private final Node node;
+    private final Socket sClient;
     private DataInputStream diStream;
     private ObjectInputStream oiStream;
     private int numUpdates;
 
-
-    /**
-     * Constructor with parameters of the class
-     * @param sClient Socket of the client
-     * @param node MainController instance that manages the server
-     */
     public DedicatedNodeSocket(Socket sClient, Node node) {
         this.sClient = sClient;
         this.node = node;
         numUpdates = 0;
     }
 
-    /**
-     * This method is triggered when start the tread
-     */
     @Override
     public void run() {
         try {
             // create the instance to receive and send the info
-            doStream = new DataOutputStream(sClient.getOutputStream());
             diStream = new DataInputStream(sClient.getInputStream());
             oiStream = new ObjectInputStream(sClient.getInputStream());
 
@@ -56,11 +36,6 @@ public class DedicatedNodeSocket extends Thread {
         }
     }
 
-    /**
-     * This function manages the received request and sends the answer
-     * @param request String with the request
-     * @throws IOException Exception that's raised
-     */
     private void readRequest(String request) throws IOException, ClassNotFoundException {
         //System.out.println("Got this message: " + request);
         String operation;
@@ -91,6 +66,11 @@ public class DedicatedNodeSocket extends Thread {
                 System.out.println("Sender: " + aux);
                 int [] status = (int[]) oiStream.readObject();
                 node.setStatus(status);
+                break;
+            case "END":
+                node.closeFile();
+                diStream.close();
+                oiStream.close();
                 break;
         }
         if (numUpdates == 10){
