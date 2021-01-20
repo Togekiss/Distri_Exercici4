@@ -1,19 +1,29 @@
 const socket = new WebSocket("ws://localhost:8080/test_war_exploded/status");
 
-function onMessage() {
-    console.log("onMessage")
+socket.onmessage = onMessage;
+
+async function formSubmit() {
+    while (true) {
+        await new Promise(r => setTimeout(r, 500));
+        socket.send("status");
+    }
 }
 
-socket.onmessage = onMessage;
-const wsUrl = 'ws://' + window.location.host
-console.log(wsUrl)
+function onMessage(event) {
+    console.debug(event)
+    var btnSubmit = document.getElementById("btnSubmit");
+    btnSubmit.disabled = true;
 
-const aux = 'ws://' + document.location.host
-console.log(aux)
+    var progress = document.getElementById("progress");
+    var data = JSON.parse(event.data);
+    progress.value = data.value;
 
-function printRand(message){
-    console.log("in printRand")
-    const randField = document.getElementById("randField");
-    randField.innerText = message;
+    var lblProgress = document.getElementById("lblProgress");
+    if(data.value < 100){
+        lblProgress.innerHTML = 'Progress: ' + data.value + '%';
+    }else{
+        btnSubmit.disabled = false;
+        lblProgress.innerHTML = "Finish";
+    }
 
 }

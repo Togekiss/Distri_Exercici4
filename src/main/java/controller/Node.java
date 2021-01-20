@@ -30,7 +30,7 @@ public class Node {
         socketListB = new ArrayList<>();
         socketListC = new ArrayList<>();
         lastOperations = new String[10];
-        status = new int[100];
+        status = new int[30];
         clientWebSocket = new ClientWebSocket();
         File myObj = new File("./src/main/java/data/log" + name + ".txt");
 
