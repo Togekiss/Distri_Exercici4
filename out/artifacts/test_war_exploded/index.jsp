@@ -20,6 +20,7 @@
   <p>
     <%
       String statusA1 = (String) request.getAttribute("statusA1");
+      if (statusA1 == null) statusA1 = "Node A1 did no operations.";
     %>
     <%=statusA1%>
   </p>
