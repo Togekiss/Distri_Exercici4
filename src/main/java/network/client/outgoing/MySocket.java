@@ -46,7 +46,10 @@ public class MySocket extends Thread{
         try {
             doStream.writeUTF("STATUS_UPDATE");
             doStream.writeUTF(Node.name);
+            ooStream.reset();
             ooStream.writeObject(status);
+
+            //ooStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -55,8 +58,8 @@ public class MySocket extends Thread{
     public void notifyEnd() {
         try {
             doStream.writeUTF("END");
-            doStream.close();
-            ooStream.close();
+            //doStream.close();
+            //ooStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

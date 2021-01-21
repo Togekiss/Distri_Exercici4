@@ -12,12 +12,10 @@ public class DedicatedNodeSocket extends Thread {
     private final Socket sClient;
     private DataInputStream diStream;
     private ObjectInputStream oiStream;
-    private int numUpdates;
 
     public DedicatedNodeSocket(Socket sClient, Node node) {
         this.sClient = sClient;
         this.node = node;
-        numUpdates = 0;
     }
 
     @Override
@@ -50,15 +48,18 @@ public class DedicatedNodeSocket extends Thread {
                 if (Node.name.startsWith("A")){
                     System.out.println("I'm an A so calling eager update to all As");
                     node.updateA(operation);
-                    numUpdates++;
+                    if (operation.startsWith("w")){
+                        node.increaseNumUpdates();
+                    }
                 }
                 break;
             case "UPDATE":
                 operation = diStream.readUTF();
                 System.out.println("UPDATE " + operation);
                 node.doOperation(operation);
-                numUpdates++;
-                //System.out.println("Got the following update: " + operation);
+                if (operation.startsWith("w")){
+                    node.increaseNumUpdates();
+                }
                 break;
             case "STATUS_UPDATE":
                 System.out.println("Got STATUS_UPDATE");
@@ -69,14 +70,14 @@ public class DedicatedNodeSocket extends Thread {
                 break;
             case "END":
                 node.closeFile();
-                diStream.close();
-                oiStream.close();
+               // diStream.close();
+               // oiStream.close();
                 break;
         }
-        if (numUpdates == 10){
+        if (node.getNumUpdates() == 10){
             System.out.println("I'm an A and 10 transactions have occurred. Updating Bs");
             node.updateB();
-            numUpdates = 0;
+            node.setNumUpdates(0);
         }
     }
 }

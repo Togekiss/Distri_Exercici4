@@ -23,6 +23,7 @@ public class Node {
     private final ClientWebSocket clientWebSocket;
     private BufferedWriter writer;
     private TimerThread timerThread;
+    private int numUpdates;
 
     public Node(String name, int myPort, int numPorts, String[] arguments){
         Node.name = name;
@@ -32,6 +33,7 @@ public class Node {
         lastOperations = new String[10];
         status = new int[30];
         clientWebSocket = new ClientWebSocket();
+        numUpdates = 0;
         File myObj = new File("./src/main/java/data/log" + name + ".txt");
 
         try {
@@ -77,19 +79,19 @@ public class Node {
                 if (line.startsWith("0")){
                     line = line.replaceFirst("0 ", "");
                     int rand = random.nextInt(socketListA.size());
-                    System.out.println("accessing this random number in arrayA: " + rand);
+                    System.out.println("accessing this random number in arrayA: " + rand + " to do this operation " + line);
                     socketListA.get(rand).notifyData(line, false);
                     //opsA.add(line);
                 }else if(line.startsWith("1")){
                     line = line.replaceFirst("1 ", "");
                     int rand = random.nextInt(socketListB.size());
-                    System.out.println("accessing this random number in arrayB: " + rand);
+                    System.out.println("accessing this random number in arrayB: " + rand + " to do this operation " + line);
                     socketListB.get(rand).notifyData(line, false);
                     //opsB.add(line);
                 }else if(line.startsWith("2")){
                     line = line.replaceFirst("2 ", "");
                     int rand = random.nextInt(socketListC.size());
-                    System.out.println("accessing this random number in arrayC: " + rand);
+                    System.out.println("accessing this random number in arrayC: " + rand + " to do this operation " + line);
                     socketListC.get(rand).notifyData(line, false);
                     //opsC.add(line);
                 }
@@ -144,6 +146,7 @@ public class Node {
     }
 
     public void updateB() {
+        System.out.println("Updating with status: " + Arrays.toString(status));
         socketListB.forEach(mySocket -> mySocket.updateStatus(status));
     }
 
@@ -178,14 +181,14 @@ public class Node {
     private void notifyTomcat(String name, String operation, int[] status) {
         String op;
         try {
-            op = "Node " + name + " performed operation: " + operation + " resulting in this status:\n" + Arrays.toString(status);
+            op = "Node " + name + " performed operation: " + operation + " resulting in this status:\t" + Arrays.toString(status);
             try {
                 writer.append(op).append("\n");
-            } catch (IOException e) {
-                System.out.println("An error occurred.");
-                e.printStackTrace();
+            } catch (IOException ignored) {
             }
-            clientWebSocket.getSession().getBasicRemote().sendText(op);
+            synchronized (clientWebSocket){
+                clientWebSocket.getSession().getBasicRemote().sendText(name + ":" +Arrays.toString(status));
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -195,12 +198,24 @@ public class Node {
         try {
             writer.close();
             if (name.equals("B2")){
-                timerThread.join();
-                clientWebSocket.getSession().close();
+          //      timerThread.join();
+               // clientWebSocket.getSession()ope.close();
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        System.exit(0);
+        //System.exit(0);
+    }
+
+    public synchronized void increaseNumUpdates() {
+        numUpdates++;
+    }
+
+    public synchronized void setNumUpdates(int i) {
+        numUpdates = i;
+    }
+
+    public synchronized int getNumUpdates() {
+        return numUpdates;
     }
 }

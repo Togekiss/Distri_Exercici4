@@ -17,16 +17,14 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-@Repository
 @ApplicationScoped
+@Repository
 @WebServlet("/servlet")
 @ServerEndpoint("/status")
 public class WebSocket extends HttpServlet {
     private Set<Session> sessions = new HashSet<>();
     private Session session;
     private NodeData nodeData = NodeData.getInstance();
-
-
 
     @OnOpen
     public void onOpen(Session session){
@@ -39,21 +37,21 @@ public class WebSocket extends HttpServlet {
     public void handleMessage(String message) {
         if (session.isOpen() && session != null){
             System.out.println(message); // data to show in html
-            System.out.println("NodeData status size is " + NodeData.getInstance().status.size());
+            //System.out.println("NodeData status size is " + NodeData.getInstance().status.size());
             nodeData.status.add(message);
-            if (message.startsWith("Node A1")){
+            if (message.startsWith("A1")){
                 NodeData.getInstance().statusA1 = message;
-            }else if (message.startsWith("Node A2")){
+            }else if (message.startsWith("A2")){
                 NodeData.getInstance().statusA2 = message;
-            }else if (message.startsWith("Node A3")){
+            }else if (message.startsWith("A3")){
                 NodeData.getInstance().statusA3 = message;
-            }else if (message.startsWith("Node B1")){
+            }else if (message.startsWith("B1")){
                 NodeData.getInstance().statusB1 = message;
-            }else if (message.startsWith("Node B2")){
+            }else if (message.startsWith("B2")){
                 NodeData.getInstance().statusB2 = message;
-            }else if (message.startsWith("Node C1")){
+            }else if (message.startsWith("C1")){
                 NodeData.getInstance().statusC1 = message;
-            }else if (message.startsWith("Node C2")){
+            }else if (message.startsWith("C2")){
                 NodeData.getInstance().statusC2 = message;
             }
         }else{
@@ -76,8 +74,8 @@ public class WebSocket extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response){
         processRequest(request, response);
-        System.out.println("doGet");
     }
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         processRequest(request, response);
